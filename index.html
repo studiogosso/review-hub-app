@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Review Hub</title>
+<style>
+:root{
+  --bg:#0a0e17; --bg2:#111827; --bg3:#1a2236; --bg4:#243049;
+  --border:#263354; --text:#e2e8f0; --dim:#4d6080; --dim2:#8fa3c0;
+  --blue:#3b82f6; --blue-bg:rgba(59,130,246,.12);
+  --green:#10b981; --yellow:#f59e0b; --red:#ef4444; --orange:#f57c00;
+  --card:0 2px 8px rgba(0,0,0,.3),0 1px 2px rgba(0,0,0,.2);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{overflow-x:hidden;max-width:100vw}
+body{font-family:Inter,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased;min-height:100vh}
+
+/* Header */
+.head{position:sticky;top:0;background:linear-gradient(180deg,var(--bg2),var(--bg));border-bottom:2px solid var(--border);padding:14px 16px;z-index:50;backdrop-filter:blur(8px)}
+.head h1{font-size:18px;font-weight:700;color:var(--blue);letter-spacing:.5px;margin-bottom:4px}
+.head .sub{font-size:11px;color:var(--dim2)}
+.progress{margin-top:10px;background:var(--bg3);border-radius:50px;height:8px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .3s}
+.stats{display:flex;gap:10px;margin-top:8px;font-size:11px;color:var(--dim2);flex-wrap:wrap}
+.stats .st{display:inline-flex;align-items:center;gap:4px}
+.stats .st b{color:var(--text)}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:6px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.filter-btn{padding:6px 12px;border:1px solid var(--border);border-radius:50px;background:transparent;color:var(--dim2);font-size:12px;cursor:pointer;flex-shrink:0}
+.filter-btn.on{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);font-weight:600}
+.filter-btn:hover{color:var(--text)}
+
+/* Content */
+.content{padding:12px 16px 100px;max-width:800px;margin:0 auto}
+.cat-title{font-size:11px;color:var(--dim2);text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;padding-left:4px}
+.cat-title:first-child{margin-top:0}
+
+/* Card */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:var(--card);transition:all .15s}
+.card.done{border-color:var(--green);background:rgba(16,185,129,.04)}
+.card.improve{border-color:var(--yellow);background:rgba(245,158,11,.04)}
+.card.reject{border-color:var(--red);background:rgba(239,68,68,.04);opacity:.7}
+.card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.card-title{flex:1;font-weight:700;font-size:15px;line-height:1.3}
+.card-subtitle{font-size:11px;color:var(--dim2);margin-top:2px}
+.card-url{display:inline-block;margin-top:6px;font-size:11px;color:var(--blue);text-decoration:none;word-break:break-all}
+.card-url:hover{text-decoration:underline}
+.card-desc{font-size:12px;color:var(--dim2);line-height:1.5;margin:6px 0 10px}
+
+/* Stars */
+.stars{display:flex;gap:4px;margin:8px 0}
+.star{font-size:24px;cursor:pointer;color:var(--bg4);transition:color .1s;background:none;border:none;padding:0;line-height:1}
+.star.on{color:var(--yellow)}
+.star:hover{transform:scale(1.1)}
+
+/* Status buttons */
+.status-btns{display:flex;gap:6px;margin:8px 0}
+.sb{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim2);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
+.sb.sel-ok{background:rgba(16,185,129,.15);border-color:var(--green);color:var(--green)}
+.sb.sel-improve{background:rgba(245,158,11,.15);border-color:var(--yellow);color:var(--yellow)}
+.sb.sel-reject{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red)}
+.sb:hover{color:var(--text)}
+
+/* Comment */
+.comment{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit;margin-top:6px}
+.comment:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+
+/* Bottom bar */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:2px solid var(--border);padding:10px 16px;display:flex;gap:8px;z-index:40;backdrop-filter:blur(8px)}
+.bb-btn{flex:1;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--text);cursor:pointer;font-size:12px;font-weight:600}
+.bb-btn:hover{background:var(--bg4)}
+.bb-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* Modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.modal-content{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto}
+.modal h3{margin-bottom:12px;font-size:16px}
+.modal textarea{width:100%;min-height:300px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:monospace;font-size:11px;resize:vertical}
+.modal-btns{display:flex;gap:8px;margin-top:12px}
+
+/* Tag badges */
+.badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.badge{padding:2px 8px;border-radius:50px;font-size:10px;font-weight:600;background:var(--bg3);color:var(--dim2)}
+.badge.cat-tag-viewer{background:rgba(59,130,246,.15);color:var(--blue)}
+.badge.cat-app{background:rgba(99,102,241,.15);color:#818cf8}
+.badge.cat-game{background:rgba(239,68,68,.15);color:var(--red)}
+.badge.cat-pitch{background:rgba(245,158,11,.15);color:var(--yellow)}
+.badge.cat-infra{background:rgba(16,185,129,.15);color:var(--green)}
+.badge.cat-obsidian{background:rgba(124,77,255,.15);color:#a78bfa}
+
+@media(max-width:640px){
+  .content{padding:10px 10px 110px}
+  .card{padding:12px}
+  .card-title{font-size:14px}
+  .sb{padding:10px 6px;font-size:11px}
+  .star{font-size:28px}
+}
+</style>
+</head>
+<body>
+
+<header class="head">
+  <h1>⭐ Review Hub</h1>
+  <div class="sub">今夜作った全成果をレビュー</div>
+  <div class="progress"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="stats">
+    <span class="st">📝 評価済み <b id="stDone">0</b>/<b id="stTotal">0</b></span>
+    <span class="st">👍 <b id="stOk">0</b></span>
+    <span class="st">🔧 <b id="stImp">0</b></span>
+    <span class="st">❌ <b id="stRej">0</b></span>
+    <span class="st">⭐ 平均 <b id="stAvg">-</b></span>
+  </div>
+</header>
+
+<div class="filter-bar" id="filterBar"></div>
+
+<main class="content" id="content"></main>
+
+<div class="bottom-bar">
+  <button class="bb-btn" onclick="resetAll()">リセット</button>
+  <button class="bb-btn primary" onclick="showExport()">📤 エクスポート</button>
+</div>
+
+<div class="modal" id="exportModal">
+  <div class="modal-content">
+    <h3>エクスポート</h3>
+    <div class="modal-btns" style="margin-bottom:8px">
+      <button class="bb-btn" onclick="setExportFormat('markdown')">Markdown</button>
+      <button class="bb-btn" onclick="setExportFormat('json')">JSON</button>
+      <button class="bb-btn" onclick="setExportFormat('notion')">Notion用</button>
+    </div>
+    <textarea id="exportText" readonly></textarea>
+    <div class="modal-btns">
+      <button class="bb-btn" onclick="copyExport()">📋 コピー</button>
+      <button class="bb-btn" onclick="closeModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === Review Items ===
+const ITEMS = [
+  // tag-viewer
+  {id:'tv-v80',cat:'tag-viewer',title:'tag-viewer v8.0',sub:'UIリデザイン',desc:'ネイビーパレット、pill型タグ、カードシャドウ、スピナー',url:'https://studiogosso.github.io/tag-viewer-app/'},
+  {id:'tv-v81',cat:'tag-viewer',title:'tag-viewer v8.1',sub:'25箇所UX修正',desc:'コントラスト、タップ領域44px、余白、モバイルシート'},
+  {id:'tv-v82',cat:'tag-viewer',title:'tag-viewer v8.2',sub:'インタラクティブ化',desc:'チャートのホバー、キーボードナビ、AND/OR日本語'},
+  {id:'tv-v83',cat:'tag-viewer',title:'tag-viewer v8.3',sub:'パフォーマンス',desc:'O(1)パス検索、ツリー自動展開、タグツリー折りたたみ'},
+  {id:'tv-v84',cat:'tag-viewer',title:'tag-viewer v8.4',sub:'初心者対応',desc:'ウェルカムバナー、ソースバッジ、ドリルダウンプレビュー'},
+  {id:'tv-v85',cat:'tag-viewer',title:'tag-viewer v8.5',sub:'Notion統合',desc:'タグマッピング、NAS/Notionセクション分離'},
+  {id:'tv-v86',cat:'tag-viewer',title:'tag-viewer v8.6',sub:'最終ポリッシュ',desc:'onerror修正、モバイルoverflow、エラーUI'},
+  {id:'tv-data',cat:'tag-viewer',title:'NASスキャン精緻化',sub:'75kフォルダ対応',desc:'9k→47k→75,786フォルダ。790,933ファイル、24,862サムネ'},
+  {id:'tv-search',cat:'tag-viewer',title:'スマート検索',sub:'日本語→タグ変換',desc:'「原画」→genga、「呪術3期」→JTK3、サジェスト+キーボードナビ'},
+
+  // 新アプリ
+  {id:'app-portfolio',cat:'app',title:'ポートフォリオ v2',sub:'新規+代表作強化',desc:'14作品、代表作3本、3言語(JA/EN/FR)、パスワード保護(gosso2026)',url:'https://studiogosso.github.io/portfolio-app/'},
+  {id:'app-invoice',cat:'app',title:'請求書ツール v2',sub:'新規+顧客保存',desc:'フランスfacture、TVA 5種、自動採番、顧客リスト、PDF出力',url:'https://studiogosso.github.io/invoice-app/'},
+  {id:'app-hobby',cat:'app',title:'趣味ハブ v4',sub:'新規+4サイクル改善',desc:'4タブ、画像/アーティスト/著者/プレイ時間、お気に入り、ジャンルタグ、チャート',url:'https://studiogosso.github.io/hobby-hub-app/'},
+  {id:'app-people',cat:'app',title:'人脈管理 v4',sub:'新規+4サイクル改善',desc:'クイック追加、カメラ、発音メモ、誕生日、連絡履歴、CSV',url:'https://studiogosso.github.io/people-app/'},
+  {id:'app-duo',cat:'app',title:'DUO単語帳 v2',sub:'全45セクション完走',desc:'78→500例文（+422）。オリジナル英文で著作権回避',url:'https://studiogosso.github.io/duo-vocab-app/'},
+
+  // ゲーム
+  {id:'game-raven126',cat:'game',title:'RAVEN REBORN v1.26',sub:'デッキ圧縮実装',desc:'手札2枚→1枚の浄化カード、AP1、1ゲーム3回、ショートカット「P」',url:'https://studiogosso.github.io/raven-reborn/'},
+  {id:'game-raven127',cat:'game',title:'RAVEN REBORN v1.27',sub:'連鎖圧縮ボーナス',desc:'同一ターン2回目の浄化で効果1.5倍バフ、金色グロー+バースト'},
+  {id:'game-raven-next',cat:'game',title:'v1.27進化案10本',sub:'次の実装候補',desc:'6 MUST: 呪印カード、漂流者イベント、圧縮エフェクト、ミニマップ、チャレンジ等'},
+
+  // PITCH FORGE + アニメ企画
+  {id:'pitch-v18',cat:'pitch',title:'PITCH FORGE v1.8',sub:'301本の企画データ',desc:'222→301本（+79本）、verdict/cg_potential/market_fit追加',url:'https://studiogosso.github.io/anime-pitch-app/'},
+  {id:'pitch-batch1',cat:'pitch',title:'アニメ企画 Batch1批評',sub:'40本',desc:'17 MUST / 20 GOOD / 3 SKIP。CGアニメ視点で批評'},
+  {id:'pitch-batch2',cat:'pitch',title:'アニメ企画 Batch2',sub:'39本新規+批評',desc:'新文化圏19: ペルシャ、ポリネシア、スラブ、アイヌ、バスク等。17 MUST'},
+  {id:'pitch-top10',cat:'pitch',title:'TOP10分析レポート',sub:'欧州共同制作ロードマップ',desc:'色彩戒厳令、バスクの魔女、モンテ・クリスト等。チーム規模、予算、助成金ルート'},
+
+  // Obsidian
+  {id:'obs-vault',cat:'obsidian',title:'Obsidian Vault構成刷新',sub:'6フォルダ体系',desc:'00_daily/10_production/20_reference/30_ideas/40_life/50_people'},
+  {id:'obs-sync',cat:'obsidian',title:'SynologyDrive移動',sub:'全デバイス同期',desc:'C:/Users/studi/SynologyDrive/gosso_obsidian/。NAS経由で同期'},
+  {id:'obs-commands',cat:'obsidian',title:'カスタムコマンド4つ',sub:'/trace /connect /ideas /daily',desc:'アイデア追跡、ノート接続、アクション生成、デイリー自動生成'},
+  {id:'obs-claude',cat:'obsidian',title:'CLAUDE.md生きたドキュメント',sub:'前頭葉',desc:'ユーザー情報、ルール、現プロジェクト。定期更新'},
+
+  // インフラ
+  {id:'inf-ocr',cat:'infra',title:'レシートOCRスクリプト',sub:'receipt_ocr.js',desc:'フォルダ監視→Claude OCR→日付別振り分け→Notion投稿'},
+  {id:'inf-nas-pipeline',cat:'infra',title:'NAS自動パイプライン',sub:'毎日4時/5時',desc:'NASスキャン→日本PCデプロイ→GitHub Pages'},
+  {id:'inf-notion-report',cat:'infra',title:'Notion日報（詳細版）',sub:'全成果まとめ',desc:'Tag relation + 本文ブロック、カテゴリ別、バッチ投稿'},
+  {id:'inf-lfs',cat:'infra',title:'Git LFS対応',sub:'143MB管理',desc:'data.jsonの大サイズ問題を解決、deploy用は除外'},
+  {id:'inf-critique',cat:'infra',title:'5人重厚批判体制',sub:'ユーザーA/B/C+UX+批評家',desc:'全アプリ改善に適用、最大並列10チーム運用'},
+];
+
+// === State ===
+const STORAGE_KEY = 'review-hub-data';
+let reviews = loadReviews();
+let currentFilter = 'all';
+let exportFormat = 'markdown';
+
+function loadReviews(){
+  try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{}}catch{return{}}
+}
+function saveReviews(){localStorage.setItem(STORAGE_KEY,JSON.stringify(reviews))}
+
+// === Rendering ===
+function render(){
+  const content = document.getElementById('content');
+  const cats = {
+    'tag-viewer':'🔍 tag-viewer',
+    'app':'📱 新アプリ',
+    'game':'🎮 ゲーム',
+    'pitch':'🎬 アニメ企画',
+    'obsidian':'🧠 Obsidian',
+    'infra':'🛠 インフラ'
+  };
+
+  let filtered = ITEMS;
+  if(currentFilter==='unreviewed')filtered=ITEMS.filter(i=>!reviews[i.id]||!reviews[i.id].status);
+  else if(currentFilter==='ok')filtered=ITEMS.filter(i=>reviews[i.id]&&reviews[i.id].status==='ok');
+  else if(currentFilter==='improve')filtered=ITEMS.filter(i=>reviews[i.id]&&reviews[i.id].status==='improve');
+  else if(currentFilter==='reject')filtered=ITEMS.filter(i=>reviews[i.id]&&reviews[i.id].status==='reject');
+  else if(cats[currentFilter])filtered=ITEMS.filter(i=>i.cat===currentFilter);
+
+  let html='';
+  let lastCat='';
+  filtered.forEach(item=>{
+    if(currentFilter==='all'||Object.keys(cats).includes(currentFilter)){
+      if(item.cat!==lastCat){
+        html+='<div class="cat-title">'+cats[item.cat]+'</div>';
+        lastCat=item.cat;
+      }
+    }
+    html+=renderCard(item);
+  });
+
+  if(filtered.length===0)html='<div style="text-align:center;padding:40px;color:var(--dim)">該当する項目がありません</div>';
+  content.innerHTML=html;
+  updateStats();
+}
+
+function renderCard(item){
+  const r = reviews[item.id] || {};
+  const rating = r.rating || 0;
+  const status = r.status || '';
+  const comment = r.comment || '';
+
+  const cardClass = status ? 'card '+(status==='ok'?'done':status==='improve'?'improve':status==='reject'?'reject':'') : 'card';
+
+  let stars='';
+  for(let i=1;i<=5;i++){
+    stars+='<button class="star '+(i<=rating?'on':'')+'" onclick="setRating(\''+item.id+'\','+i+')">★</button>';
+  }
+
+  return `<div class="${cardClass}">
+    <div class="card-head">
+      <div style="flex:1">
+        <div class="card-title">${esc(item.title)}</div>
+        <div class="card-subtitle">${esc(item.sub||'')}</div>
+        <div class="badges"><span class="badge cat-${item.cat}">${item.cat}</span></div>
+      </div>
+    </div>
+    <div class="card-desc">${esc(item.desc)}</div>
+    ${item.url?'<a class="card-url" href="'+esc(item.url)+'" target="_blank">'+esc(item.url)+' ↗</a>':''}
+    <div class="stars">${stars}</div>
+    <div class="status-btns">
+      <button class="sb ${status==='ok'?'sel-ok':''}" onclick="setStatus('${item.id}','ok')">👍 OK</button>
+      <button class="sb ${status==='improve'?'sel-improve':''}" onclick="setStatus('${item.id}','improve')">🔧 要改善</button>
+      <button class="sb ${status==='reject'?'sel-reject':''}" onclick="setStatus('${item.id}','reject')">❌ 却下</button>
+    </div>
+    <textarea class="comment" placeholder="コメント・改善要望..." oninput="setComment('${item.id}',this.value)">${esc(comment)}</textarea>
+  </div>`;
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// === Actions ===
+window.setRating=function(id,rating){
+  if(!reviews[id])reviews[id]={};
+  reviews[id].rating=reviews[id].rating===rating?0:rating;
+  saveReviews();render();
+};
+window.setStatus=function(id,status){
+  if(!reviews[id])reviews[id]={};
+  reviews[id].status=reviews[id].status===status?'':status;
+  saveReviews();render();
+};
+window.setComment=function(id,text){
+  if(!reviews[id])reviews[id]={};
+  reviews[id].comment=text;
+  saveReviews();updateStats();
+};
+window.resetAll=function(){
+  if(!confirm('全てのレビューをリセットしますか？'))return;
+  reviews={};saveReviews();render();
+};
+
+// === Filters ===
+function renderFilters(){
+  const filters = [
+    {id:'all',label:'全て('+ITEMS.length+')'},
+    {id:'unreviewed',label:'未評価'},
+    {id:'ok',label:'👍 OK'},
+    {id:'improve',label:'🔧 要改善'},
+    {id:'reject',label:'❌ 却下'},
+    {id:'tag-viewer',label:'🔍 tag-viewer'},
+    {id:'app',label:'📱 アプリ'},
+    {id:'game',label:'🎮 ゲーム'},
+    {id:'pitch',label:'🎬 企画'},
+    {id:'obsidian',label:'🧠 Obsidian'},
+    {id:'infra',label:'🛠 インフラ'}
+  ];
+  const html = filters.map(f=>`<button class="filter-btn ${currentFilter===f.id?'on':''}" onclick="setFilter('${f.id}')">${f.label}</button>`).join('');
+  document.getElementById('filterBar').innerHTML=html;
+}
+window.setFilter=function(id){currentFilter=id;renderFilters();render()};
+
+// === Stats ===
+function updateStats(){
+  const total = ITEMS.length;
+  const done = Object.values(reviews).filter(r=>r.status).length;
+  const ok = Object.values(reviews).filter(r=>r.status==='ok').length;
+  const imp = Object.values(reviews).filter(r=>r.status==='improve').length;
+  const rej = Object.values(reviews).filter(r=>r.status==='reject').length;
+  const ratings = Object.values(reviews).filter(r=>r.rating>0).map(r=>r.rating);
+  const avg = ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):'-';
+
+  document.getElementById('stTotal').textContent=total;
+  document.getElementById('stDone').textContent=done;
+  document.getElementById('stOk').textContent=ok;
+  document.getElementById('stImp').textContent=imp;
+  document.getElementById('stRej').textContent=rej;
+  document.getElementById('stAvg').textContent=avg;
+  document.getElementById('progressFill').style.width=(done/total*100)+'%';
+}
+
+// === Export ===
+window.showExport=function(){
+  document.getElementById('exportModal').classList.add('on');
+  updateExport();
+};
+window.closeModal=function(){document.getElementById('exportModal').classList.remove('on')};
+window.setExportFormat=function(fmt){exportFormat=fmt;updateExport()};
+window.copyExport=function(){
+  const ta = document.getElementById('exportText');
+  ta.select();document.execCommand('copy');
+  const btn = event.target;
+  const t = btn.textContent;btn.textContent='✓ コピー済み';
+  setTimeout(()=>btn.textContent=t,1500);
+};
+
+function updateExport(){
+  const ta = document.getElementById('exportText');
+  if(exportFormat==='json'){
+    ta.value=JSON.stringify(reviews,null,2);
+  } else if(exportFormat==='markdown'){
+    let md='# レビュー結果\n\n';
+    const cats = {'tag-viewer':'tag-viewer','app':'新アプリ','game':'ゲーム','pitch':'アニメ企画','obsidian':'Obsidian','infra':'インフラ'};
+    Object.entries(cats).forEach(([c,label])=>{
+      const items = ITEMS.filter(i=>i.cat===c&&reviews[i.id]);
+      if(items.length===0)return;
+      md+='## '+label+'\n\n';
+      items.forEach(i=>{
+        const r=reviews[i.id];
+        md+='### '+i.title+'\n';
+        if(r.rating)md+='評価: '+'★'.repeat(r.rating)+'☆'.repeat(5-r.rating)+'\n';
+        if(r.status)md+='ステータス: '+(r.status==='ok'?'👍 OK':r.status==='improve'?'🔧 要改善':'❌ 却下')+'\n';
+        if(r.comment)md+='コメント: '+r.comment+'\n';
+        md+='\n';
+      });
+    });
+    ta.value=md;
+  } else {
+    // Notion formatted
+    let txt='';
+    ITEMS.forEach(i=>{
+      const r=reviews[i.id];
+      if(!r||(!r.status&&!r.rating&&!r.comment))return;
+      const stars=r.rating?' ★'+r.rating:'';
+      const s=r.status?' ['+(r.status==='ok'?'OK':r.status==='improve'?'要改善':'却下')+']':'';
+      txt+='• '+i.title+stars+s+'\n';
+      if(r.comment)txt+='  └ '+r.comment+'\n';
+    });
+    ta.value=txt||'（未評価）';
+  }
+}
+
+// === Init ===
+renderFilters();
+render();
+</script>
+</body>
+</html>
